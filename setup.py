@@ -5,7 +5,7 @@ setup(
     description='set of utilities to merge sorted files and aggregate items in them',
     author='Ludovica Pannitto',
     author_email='ellepannitto@gmail.com',
-    download_url='https://github.com/ellepannitto/FileMerger',
+    download_url='https://github.com/ellepannitto/FileMerger/archive/v_0.1.0.tar.gz',
     url='https://ellepannitto.github.io/',
     version='0.1.0',
     license='MIT',
