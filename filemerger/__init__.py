@@ -1,0 +1,1 @@
+from filemerger.core import merge, collapse, Mode
