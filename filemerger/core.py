@@ -5,9 +5,11 @@ import glob
 
 from enum import Enum
 
+
 class Mode(Enum):
     txt = 1
     gzip = 2
+
 
 def merge(filename_pattern, output_filename, mode=Mode.txt):
 
@@ -22,16 +24,17 @@ def merge(filename_pattern, output_filename, mode=Mode.txt):
         with gzip.open(output_filename, 'wt') as f:
             f.writelines(heapq.merge(*files))
 
-def collapse(filename, output_filename, delimiter = "\t"):
+
+def collapse(filename, output_filename, delimiter="\t"):
 
     with gzip.open(filename, "rt") as fin, open(output_filename, "w") as fout:
 
         firstline, firstfreq = fin.readline().strip().split(delimiter)
-        firstfreq = int (firstfreq)
+        firstfreq = float(firstfreq)
 
         for line in fin:
             el, freq = line.strip().split(delimiter)
-            freq = int(freq)
+            freq = float(freq)
             if el == firstline:
                 firstfreq += freq
             else:
@@ -40,6 +43,3 @@ def collapse(filename, output_filename, delimiter = "\t"):
                 firstfreq = freq
 
         print("{}\t{}".format(firstline, firstfreq), file=fout)
-
-
-
