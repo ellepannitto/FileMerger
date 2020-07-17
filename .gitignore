@@ -1,2 +1,5 @@
 # Project exclude paths
 /venv/
+
+# Python compiled stuff
+*.py[cod]

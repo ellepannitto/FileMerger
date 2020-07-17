@@ -6,9 +6,9 @@ import os
 import shutil
 import tempfile
 
-from sdm.utils import data_utils as dutils
-
 from enum import Enum
+
+from filesmerger.utils import grouper
 
 
 class Mode(Enum):
@@ -39,10 +39,9 @@ def merge_and_collapse_iterable (files, output_filename=None, mode=Mode.txt, bat
         next_iterable = []
 
         with contextlib.ExitStack() as stack:
-            for files_group in dutils.grouper(files, batch):
+            for files_group in grouper(files, batch):
                 files_group = [stack.enter_context(openfunc(fn)) for fn in files_group if fn is not None]
                 outfile, outfile_name = tempfile.mkstemp(text=True)
-                print("PRINTING ON", outfile_name)
                 next_iterable.append (outfile_name)
                 tempfiles.append (outfile_name)
                 total_files_produced += 1
@@ -56,26 +55,24 @@ def merge_and_collapse_iterable (files, output_filename=None, mode=Mode.txt, bat
 
     for tmpfile in tempfiles[:-1]:
         os.remove(tmpfile)
-        print("REMOVING", tmpfile)
 
-    for file in init_files:
-        os.remove(file)
+    if False:
+        for file in init_files:
+            os.remove(file)
 
-    # print("MOVING", tempfiles[-1])
-    shutil.move (tempfiles[-1], output_filename)
+    collapse(tempfiles[-1], output_filename, mode=mode)
 
-    collapse(output_filename, output_filename+".collapsed")
-    os.remove(output_filename)
-
-    return output_filename+".collapsed"
+    os.remove(tempfiles[-1])
+    
+    return output_filename
 
 
-def merge_pattern (filename_pattern, output_filename=None, mode=Mode.txt, batch=1024):
+def merge_and_collapse_pattern (filename_pattern, output_filename=None, mode=Mode.txt, batch=1024):
     files = glob.iglob(filename_pattern)
     return merge_and_collapse_iterable(files, output_filename, mode, batch)
 
 
-def collapse(filename, output_filename, delimiter="\t", threshold=0, mode=Mode.txt):
+def collapse (filename, output_filename, delimiter="\t", threshold=0, mode=Mode.txt):
 
     openfunc = lambda fname: open(fname)
     openfunc_write = lambda fname: open(fname, "wt")
