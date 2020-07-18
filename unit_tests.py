@@ -2,7 +2,7 @@ import unittest
 import gzip
 import os
 
-from filesmerger import merge_and_collapse_pattern, Mode
+from filesmerger import merge_and_collapse_pattern
 
 class TestFileMerger (unittest.TestCase):
     
@@ -20,9 +20,16 @@ class TestFileMerger (unittest.TestCase):
             self._check_expected_values (fin)    
         os.remove("tmp_output")
 
+    def test_merge_and_collapse_gz_output (self):
+        merge_and_collapse_pattern ("data/*.txt", "tmp_output.gz")
+        self.assertTrue (os.path.isfile("tmp_output.gz"))
+        with gzip.open ("tmp_output.gz", "rt") as fin:
+            self._check_expected_values (fin)    
+        os.remove("tmp_output.gz")
+    
     def test_automatic_output_file_naming (self):
         output_path = merge_and_collapse_pattern ("data/*.txt")
-        with open (output_path) as fin:
+        with gzip.open (output_path, "rt") as fin:
             self._check_expected_values (fin)
         os.remove(output_path)
 

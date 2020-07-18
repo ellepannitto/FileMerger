@@ -8,29 +8,16 @@ import tempfile
 
 from enum import Enum
 
-from filesmerger.utils import grouper
+from filesmerger.utils import grouper, open_file_by_extension
 
-
-class Mode(Enum):
-    txt = 1
-    gzip = 2
-
-
-def merge_and_collapse_iterable (files, output_filename=None, mode=Mode.txt, batch=1024):
+def merge_and_collapse_iterable (files, output_filename=None, batch=1024):
 
     init_files = files
 
     if output_filename is None:
-        _, output_filename = tempfile.mkstemp(text=True)
-
-    openfunc = lambda fname: open(fname)
-    openfunc_write = lambda fname: open(fname, "wt")
-    if mode == Mode.gzip:
-        openfunc = lambda fname: gzip.open(fname, "rt")
-        openfunc_write = lambda fname: gzip.open(fname, "wt")
+        _, output_filename = tempfile.mkstemp(suffix=".gz", text=False)
 
     first = True
-    total_files_produced = 0
     tempfiles = []
 
     while first or len(files) > 1:
@@ -40,48 +27,41 @@ def merge_and_collapse_iterable (files, output_filename=None, mode=Mode.txt, bat
 
         with contextlib.ExitStack() as stack:
             for files_group in grouper(files, batch):
-                files_group = [stack.enter_context(openfunc(fn)) for fn in files_group if fn is not None]
-                outfile, outfile_name = tempfile.mkstemp(text=True)
-                next_iterable.append (outfile_name)
-                tempfiles.append (outfile_name)
-                total_files_produced += 1
-                with open(outfile_name, "w") as f:
+                files_group = [stack.enter_context(open_file_by_extension(fn)) for fn in files_group if fn is not None]
+                _, tmpfilename = tempfile.mkstemp(text=True, suffix=".gz")
+                next_iterable.append (tmpfilename)
+                tempfiles.append (tmpfilename)
+                with gzip.open(tmpfilename, "wt") as f:
                     f.writelines(heapq.merge(*files_group))
-                # next_file_id += 1
                 for fhandler in files_group:
                     fhandler.close()
 
         files = next_iterable
 
-    for tmpfile in tempfiles[:-1]:
-        os.remove(tmpfile)
+    for tmpfilename in tempfiles[:-1]:
+        os.remove(tmpfilename)
 
     if False:
         for file in init_files:
             os.remove(file)
 
-    collapse(tempfiles[-1], output_filename, mode=mode)
-
+    collapse(tempfiles[-1], output_filename)
     os.remove(tempfiles[-1])
+
+    #debug
+    # shutil.move (tempfiles[-1], output_filename)
     
     return output_filename
 
 
-def merge_and_collapse_pattern (filename_pattern, output_filename=None, mode=Mode.txt, batch=1024):
+def merge_and_collapse_pattern (filename_pattern, output_filename=None, batch=1024):
     files = glob.iglob(filename_pattern)
-    return merge_and_collapse_iterable(files, output_filename, mode, batch)
+    return merge_and_collapse_iterable(files, output_filename, batch)
 
+def collapse (filename, output_filename, delimiter="\t", threshold=0):
 
-def collapse (filename, output_filename, delimiter="\t", threshold=0, mode=Mode.txt):
-
-    openfunc = lambda fname: open(fname)
-    openfunc_write = lambda fname: open(fname, "wt")
-    if mode == Mode.gzip:
-        openfunc = lambda fname: gzip.open(fname, "rt")
-        openfunc_write = lambda fname: gzip.open(fname, "wt")
-
-    with openfunc(filename) as fin, openfunc_write(output_filename) as fout:
-
+    with open_file_by_extension(filename, "rt") as fin, open_file_by_extension(output_filename, "wt") as fout:
+        
         firstline, firstfreq = fin.readline().strip().split(delimiter)
         firstfreq = float(firstfreq)
 
