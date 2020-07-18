@@ -79,7 +79,15 @@ class TestFileMerger (unittest.TestCase):
         merge_and_collapse_pattern ("data/*.txt", "tmp_output", threshold=16)
         with open ("tmp_output") as fin:
             self._check_expected_values_with_threshold (fin)    
-        # os.remove("tmp_output")
+        os.remove("tmp_output")
+    
+    def test_different_tmp_dir (self):
+        os.makedirs ("./test/different/tempdir")
+        output_path = merge_and_collapse_pattern ("data/*.txt", batch=2, tmpdir="./test/different/tempdir")
+        with gzip.open (output_path, "rt") as fin:
+            self._check_expected_values (fin)
+        os.remove (output_path)
+        shutil.rmtree("./test")
 
 if __name__ == "__main__":
     unittest.main ()
