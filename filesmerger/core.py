@@ -10,12 +10,14 @@ from enum import Enum
 
 from filesmerger.utils import grouper, open_file_by_extension
 
-def merge_and_collapse_iterable (files, output_filename=None, batch=1024):
+def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimiter="\t", tmpdir=None, delete_input=False, threshold=0):
 
-    init_files = files
+    if delete_input:
+       input_files = list(files)
+       files = input_files
 
     if output_filename is None:
-        _, output_filename = tempfile.mkstemp(suffix=".gz", text=False)
+        _, output_filename = tempfile.mkstemp(suffix=".gz", text=False, dir=tmpdir)
 
     first = True
     tempfiles = []
@@ -28,7 +30,7 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024):
         with contextlib.ExitStack() as stack:
             for files_group in grouper(files, batch):
                 files_group = [stack.enter_context(open_file_by_extension(fn)) for fn in files_group if fn is not None]
-                _, tmpfilename = tempfile.mkstemp(text=True, suffix=".gz")
+                _, tmpfilename = tempfile.mkstemp(text=True, suffix=".gz", dir=tmpdir)
                 next_iterable.append (tmpfilename)
                 tempfiles.append (tmpfilename)
                 with gzip.open(tmpfilename, "wt") as f:
@@ -41,22 +43,19 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024):
     for tmpfilename in tempfiles[:-1]:
         os.remove(tmpfilename)
 
-    if False:
-        for file in init_files:
-            os.remove(file)
+    if delete_input:
+        for fname in input_files:
+            os.remove(fname)
 
-    collapse(tempfiles[-1], output_filename)
+    collapse(tempfiles[-1], output_filename, delimiter, threshold)
     os.remove(tempfiles[-1])
-
-    #debug
-    # shutil.move (tempfiles[-1], output_filename)
     
     return output_filename
 
 
-def merge_and_collapse_pattern (filename_pattern, output_filename=None, batch=1024):
+def merge_and_collapse_pattern (filename_pattern, output_filename=None, batch=1024, delimiter="\t", tmpdir=None, delete_input=False, threshold=0):
     files = glob.iglob(filename_pattern)
-    return merge_and_collapse_iterable(files, output_filename, batch)
+    return merge_and_collapse_iterable(files, output_filename, batch, delimiter, tmpdir, delete_input, threshold)
 
 def collapse (filename, output_filename, delimiter="\t", threshold=0):
 
