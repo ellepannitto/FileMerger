@@ -7,20 +7,18 @@ from filesmerger import merge_and_collapse_pattern
 
 class TestFileMerger (unittest.TestCase):
     
-    def _check_expected_values ( self, fin ):
-        expected_values = {"a": 33, "b": 16, "c":40, "d":19, "e":8, "f":10, "g":9}
+    def _check_expected_values ( self, fin, version='n' ):
+        map_versions = {
+            'n': {"a": 33, "b": 16, "c":40, "d":19, "e":8, "f":10, "g":9},
+            'd': {"a": 66, "b": 32, "c":80, "d":38, "e":16, "f":20, "g":18},
+            't': {"a": 33, "b": 16, "c":40, "d":19},
+        }
+        expected_values = map_versions[version]
         for line in fin:
             line = line.strip().split()
             key, val = line[0], float(line[1])
             self.assertEqual (val, expected_values[key], "value for {} is {}. should be {}".format(key, val, expected_values[key]))
     
-    def _check_expected_values_with_threshold ( self, fin ):
-        expected_values = {"a": 33, "b": 16, "c":40, "d":19}
-        for line in fin:
-            line = line.strip().split()
-            key, val = line[0], float(line[1])
-            self.assertEqual (val, expected_values[key], "value for {} is {}. should be {}".format(key, val, expected_values[key]))
-
     def test_merge_and_collapse (self):
         merge_and_collapse_pattern ("data/*.txt", "tmp_output")
         self.assertTrue (os.path.isfile("tmp_output"), "output file tmp_output does not exist")
@@ -78,7 +76,7 @@ class TestFileMerger (unittest.TestCase):
     def test_merge_and_collapse_threshold (self):
         merge_and_collapse_pattern ("data/*.txt", "tmp_output", threshold=16)
         with open ("tmp_output") as fin:
-            self._check_expected_values_with_threshold (fin)    
+            self._check_expected_values (fin, 't')    
         os.remove("tmp_output")
     
     def test_different_tmp_dir (self):
@@ -88,6 +86,12 @@ class TestFileMerger (unittest.TestCase):
             self._check_expected_values (fin)
         os.remove (output_path)
         shutil.rmtree("./test")
+
+    def test_merge_and_collapse_mix_txt_and_gz (self):
+        merge_and_collapse_pattern ("data/*", "tmp_output")
+        with open ("tmp_output") as fin:
+            self._check_expected_values (fin, 'd')    
+        os.remove("tmp_output")
 
 if __name__ == "__main__":
     unittest.main ()
