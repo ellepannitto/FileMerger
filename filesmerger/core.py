@@ -8,7 +8,7 @@ import tempfile
 
 from enum import Enum
 
-from filesmerger.utils import grouper, open_file_by_extension
+from .utils import grouper, open_file_by_extension
 
 def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimiter="\t", tmpdir=None, delete_input=False, threshold=0):
 
@@ -78,16 +78,3 @@ def collapse (filename, output_filename, delimiter="\t", threshold=0):
         if firstfreq > threshold:
             print("{}\t{}".format(firstline, firstfreq), file=fout)
 
-
-class FileMergerForPipeline:
-
-    def __init__(self):
-        self.result_file = None
-
-    def merge_files (self, mode, batch, filename_list):
-        print("merging {} files".format(len(filename_list)))
-        if self.result_file is not None:
-            filename_list.append (self.result_file)
-        self.result_file = merge_and_collapse_iterable(filename_list, mode=mode, batch=batch)
-        print("yielding {}".format(self.result_file))
-        yield [self.result_file]

@@ -3,7 +3,9 @@ import gzip
 import os
 import shutil
 
-from filesmerger import merge_and_collapse_pattern
+from pprint import pprint
+
+from filesmerger import merge_and_collapse_pattern, HierarchicalMerger
 
 class TestFileMerger (unittest.TestCase):
     
@@ -92,6 +94,90 @@ class TestFileMerger (unittest.TestCase):
         with open ("tmp_output") as fin:
             self._check_expected_values (fin, 'd')    
         os.remove("tmp_output")
+    
+    def test_hierarchical_merger (self):
+        hm = HierarchicalMerger (batch=2)
+        batches = [["data/a.txt"], ["data/b.txt"], ["data/c.gz", "data/a.txt"], ["data/b.txt", "data/c.txt"]]
+
+        for batch in batches:
+            hm.add (batch)
+        
+        output_path = hm.finalize ()
+        with gzip.open (output_path, "rt") as fin:
+            self._check_expected_values (fin, "d")
+        os.remove (output_path)
+
+    def test_hierarchical_merger_threshold (self):
+        hm = HierarchicalMerger (batch=2)
+        batches = [["data/a.txt", "data/b.txt"], ["data/c.gz"]]
+
+        for batch in batches:
+            hm.add (batch)
+        
+        output_path = hm.finalize ("tmp_output", threshold=16)
+        self.assertTrue (os.path.isfile(output_path), "output file does not exist")
+        with open (output_path) as fin:
+            self._check_expected_values (fin, "t")
+        os.remove (output_path)
+        
+    def test_hierarchical_merger_input_removing (self):
+        # copy the input data into another directory
+        shutil.copytree("data", "test_data")
+
+        hm = HierarchicalMerger (batch=2, delete_input=True)
+        batches = [["test_data/a.txt", "test_data/b.txt"], ["test_data/c.txt"], ["test_data/a.gz"], ["test_data/b.gz"]]
+
+        for batch in batches:
+            hm.add (batch)
+        
+        output_path = hm.finalize ("tmp_output")
+        self.assertTrue (os.path.isfile(output_path), "output file does not exist")
+        os.remove (output_path)
+        
+        #check that input files were removed
+        self.assertFalse (os.path.exists("test_data/a.txt"), "input file was not removed")
+        self.assertFalse (os.path.exists("test_data/a.gz"), "input file was not removed")
+        self.assertFalse (os.path.exists("test_data/b.txt"), "input file was not removed")
+        self.assertFalse (os.path.exists("test_data/b.gz"), "input file was not removed")
+        self.assertFalse (os.path.exists("test_data/c.txt"), "input file was not removed")
+        shutil.rmtree("test_data")
+    
+    def test_hierarchical_merger_input_not_removing (self):
+        # copy the input data into another directory
+        shutil.copytree("data", "test_data")
+
+        hm = HierarchicalMerger (batch=2, delete_input=False)
+        batches = [["test_data/a.txt", "test_data/b.txt"], ["test_data/c.txt"], ["test_data/a.gz"], ["test_data/b.gz"]]
+
+        for batch in batches:
+            hm.add (batch)
+        
+        output_path = hm.finalize ("tmp_output")
+        self.assertTrue (os.path.isfile(output_path), "output file does not exist")
+        os.remove (output_path)
+        
+        #check that input files were removed
+        self.assertTrue (os.path.exists("test_data/a.txt"), "input file was removed")
+        self.assertTrue (os.path.exists("test_data/a.gz"), "input file was removed")
+        self.assertTrue (os.path.exists("test_data/b.txt"), "input file was removed")
+        self.assertTrue (os.path.exists("test_data/b.gz"), "input file was removed")
+        self.assertTrue (os.path.exists("test_data/c.txt"), "input file was removed")
+        shutil.rmtree("test_data")
+    
+    def test_hierarchical_merger_different_tmp_dir (self):
+        os.makedirs ("./test/different/tempdir")
+        hm = HierarchicalMerger (batch=2, tmpdir="./test/different/tempdir")
+        batches = [["data/a.txt"], ["data/b.txt"], ["data/c.gz", "data/a.txt"], ["data/b.txt", "data/c.txt"]]
+
+        for batch in batches:
+            hm.add (batch)
+        
+        output_path = hm.finalize ()
+        with gzip.open (output_path, "rt") as fin:
+            self._check_expected_values (fin, "d")
+        os.remove (output_path)
+        shutil.rmtree("./test")
+
 
 if __name__ == "__main__":
     unittest.main ()
