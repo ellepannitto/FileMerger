@@ -33,14 +33,19 @@ class TestFileMerger (unittest.TestCase):
             self._check_expected_values (fin)
         os.remove(output_path)
 
-    # def test_merge_and_collapse_gz ( self ):
-    #     merge_and_collapse_pattern ("data/*.gz", "tmp_output2.gz", mode=Mode.gzip)
-    #     expected_values = {"a": 33, "b": 16, "c":40, "d":19, "e":8, "f":10, "g":9}
-    #     with gzip.open ("tmp_output2.gz") as fin:
-    #         for line in fin:
-    #             line = line.strip().split()
-    #             key, val = line[0], float(line[1])
-    #             self.assertEqual (val, expected_values[key], "value for {} is {}. should be {}".format(key, val, expected_values[key]))
+    def test_merge_and_collapse_gz_input_and_output ( self ):
+        merge_and_collapse_pattern ("data/*.gz", "tmp_output2.gz")
+        self.assertTrue (os.path.isfile("tmp_output2.gz"))
+        with gzip.open ("tmp_output2.gz", "rt") as fin:
+            self._check_expected_values (fin)    
+        os.remove("tmp_output2.gz")
+    
+    def test_merge_and_collapse_gz_input_automatic_output_file_naming ( self ):
+        output_path = merge_and_collapse_pattern ("data/*.gz")
+        with gzip.open (output_path, "rt") as fin:
+            self._check_expected_values (fin)    
+        os.remove(output_path)
+
 
 if __name__ == "__main__":
     unittest.main ()
