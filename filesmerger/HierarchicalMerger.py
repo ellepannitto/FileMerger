@@ -15,7 +15,6 @@ class HierarchicalMerger:
         self.delete_input = delete_input
 
         self._tree = [[]]
-        
     
     def add (self, files):
         self._tree[0].extend (files)
@@ -43,7 +42,9 @@ class HierarchicalMerger:
 
         self._tree = [[]]
         return output_path
-
-        
+    
+    def generator_add_for_pipeline (self, files):
+        self.add (files)
+        yield []        
     
      
