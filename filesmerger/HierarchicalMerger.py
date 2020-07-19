@@ -2,6 +2,7 @@
 import os
 
 from .core import merge_and_collapse_iterable
+from .utils import flatten_list
 
 class HierarchicalMerger:
 
@@ -31,12 +32,12 @@ class HierarchicalMerger:
 
     def finalize (self, output_filename=None, threshold=0):
 
-        remaining_files = sum (self._tree, [])
+        remaining_files = flatten_list(self._tree)
         output_path = merge_and_collapse_iterable ( remaining_files, output_filename, self.batch, self.delimiter, self.tmpdir, 
                                                     self.delete_input, threshold )
         if not self.delete_input:
             # temporary files have to be deleted anyway
-            tempfiles = sum (self._tree[1:], [])
+            tempfiles = flatten_list(self._tree[1:])
             for fname in tempfiles:
                 os.remove (fname)
 
@@ -45,6 +46,6 @@ class HierarchicalMerger:
     
     def generator_add_for_pipeline (self, files):
         self.add (files)
-        yield []        
+        yield [flatten_list(self._tree)]
     
      

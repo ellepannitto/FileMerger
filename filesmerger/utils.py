@@ -20,3 +20,6 @@ def open_file_by_extension ( filename: str, mode=None ):
         if mode == None:
             mode = "r"
         return open(filename, mode)
+
+def flatten_list (l):
+    return sum(l, [])
