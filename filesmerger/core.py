@@ -3,10 +3,7 @@ import contextlib
 import gzip
 import glob
 import os
-import shutil
 import tempfile
-
-from enum import Enum
 
 from .utils import grouper, open_file_by_extension
 import logging
@@ -16,6 +13,7 @@ logger = logging.getLogger(__name__)
 def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimiter="\t",
                                  tmpdir=None, delete_input=False, threshold=0):
 
+    input_files = []
     if delete_input:
        input_files = list(files)
        files = input_files
@@ -23,7 +21,10 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimi
     if output_filename is None:
         _, output_filename = tempfile.mkstemp(suffix=".gz", text=False, dir=tmpdir)
 
-    logger.debug ("merging {} files into {}".format(len(files), output_filename))
+    try:
+        logger.debug ("merging {} files into {}".format(len(files), output_filename))
+    except TypeError:
+        logger.debug ("merging an unknown number of files into {}".format(output_filename))
 
     first = True
     tempfiles = []
@@ -68,24 +69,31 @@ def merge_and_collapse_pattern (filename_pattern, output_filename=None, batch=10
     files = glob.iglob(filename_pattern)
     return merge_and_collapse_iterable(files, output_filename, batch, delimiter, tmpdir, delete_input, threshold)
 
-def collapse (filename, output_filename, delimiter="\t", threshold=0):
+def collapse_lines ( lines, delimiter="\t", threshold=0 ):
 
-    with open_file_by_extension(filename, "rt") as fin, open_file_by_extension(output_filename, "wt") as fout:
-        
-        firstline, firstfreq = fin.readline().strip().split(delimiter)
+    try:
+        firstline, firstfreq = next(lines).strip().split(delimiter)
         firstfreq = float(firstfreq)
 
-        for line in fin:
+        for line in lines:
             el, freq = line.strip().split(delimiter)
             freq = float(freq)
             if el == firstline:
                 firstfreq += freq
             else:
                 if firstfreq > threshold:
-                    print("{}\t{}".format(firstline, firstfreq), file=fout)
+                    yield "{}{}{}\n".format(firstline, delimiter, firstfreq)
                 firstline = el
                 firstfreq = freq
 
         if firstfreq > threshold:
-            print("{}\t{}".format(firstline, firstfreq), file=fout)
+            yield "{}{}{}\n".format(firstline, delimiter, firstfreq)
+    
+    except StopIteration:
+        pass
+
+def collapse (filename, output_filename, delimiter="\t", threshold=0):
+
+    with open_file_by_extension(filename, "rt") as fin, open_file_by_extension(output_filename, "wt") as fout:
+        fout.writelines (collapse_lines (fin, delimiter, threshold))
 
