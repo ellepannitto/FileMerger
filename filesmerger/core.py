@@ -9,8 +9,12 @@ import tempfile
 from enum import Enum
 
 from .utils import grouper, open_file_by_extension
+import logging
 
-def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimiter="\t", tmpdir=None, delete_input=False, threshold=0):
+logger = logging.getLogger(__name__)
+
+def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimiter="\t",
+                                 tmpdir=None, delete_input=False, threshold=0):
 
     if delete_input:
        input_files = list(files)
@@ -19,10 +23,13 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimi
     if output_filename is None:
         _, output_filename = tempfile.mkstemp(suffix=".gz", text=False, dir=tmpdir)
 
+    logger.debug ("merging {} files into {}".format(len(files), output_filename))
+
     first = True
     tempfiles = []
 
     while first or len(files) > 1:
+        logger.debug ("next iteration of hierarchical merge")
 
         first = False
         next_iterable = []
@@ -40,6 +47,7 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimi
 
         files = next_iterable
 
+    logger.debug("finished merging")
     for tmpfilename in tempfiles[:-1]:
         os.remove(tmpfilename)
 
@@ -49,11 +57,14 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimi
 
     collapse(tempfiles[-1], output_filename, delimiter, threshold)
     os.remove(tempfiles[-1])
-    
+
+    logger.debug("finished collapsing")
+
     return output_filename
 
 
-def merge_and_collapse_pattern (filename_pattern, output_filename=None, batch=1024, delimiter="\t", tmpdir=None, delete_input=False, threshold=0):
+def merge_and_collapse_pattern (filename_pattern, output_filename=None, batch=1024, delimiter="\t",
+                                tmpdir=None, delete_input=False, threshold=0):
     files = glob.iglob(filename_pattern)
     return merge_and_collapse_iterable(files, output_filename, batch, delimiter, tmpdir, delete_input, threshold)
 
