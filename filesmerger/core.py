@@ -3,6 +3,7 @@ import contextlib
 import gzip
 import glob
 import os
+import shutil
 import tempfile
 
 from .utils import grouper, open_file_by_extension
@@ -42,7 +43,7 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimi
                 next_iterable.append (tmpfilename)
                 tempfiles.append (tmpfilename)
                 with gzip.open(tmpfilename, "wt") as f:
-                    f.writelines(heapq.merge(*files_group))
+                    f.writelines( collapse_lines (heapq.merge(*files_group), delimiter, threshold) )
                 for fhandler in files_group:
                     fhandler.close()
 
@@ -56,10 +57,7 @@ def merge_and_collapse_iterable (files, output_filename=None, batch=1024, delimi
         for fname in input_files:
             os.remove(fname)
 
-    collapse(tempfiles[-1], output_filename, delimiter, threshold)
-    os.remove(tempfiles[-1])
-
-    logger.debug("finished collapsing")
+    shutil.move (tempfiles[-1], output_filename)
 
     return output_filename
 

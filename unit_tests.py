@@ -24,7 +24,7 @@ class TestFileMerger (unittest.TestCase):
     def test_merge_and_collapse (self):
         merge_and_collapse_pattern ("data/*.txt", "tmp_output")
         self.assertTrue (os.path.isfile("tmp_output"), "output file tmp_output does not exist")
-        with open ("tmp_output") as fin:
+        with gzip.open ("tmp_output", "rt") as fin:
             self._check_expected_values (fin)    
         os.remove("tmp_output")
         #check that input files were not removed
@@ -77,7 +77,7 @@ class TestFileMerger (unittest.TestCase):
     
     def test_merge_and_collapse_threshold (self):
         merge_and_collapse_pattern ("data/*.txt", "tmp_output", threshold=16)
-        with open ("tmp_output") as fin:
+        with gzip.open ("tmp_output", "rt") as fin:
             self._check_expected_values (fin, 't')    
         os.remove("tmp_output")
     
@@ -91,7 +91,7 @@ class TestFileMerger (unittest.TestCase):
 
     def test_merge_and_collapse_mix_txt_and_gz (self):
         merge_and_collapse_pattern ("data/*", "tmp_output")
-        with open ("tmp_output") as fin:
+        with gzip.open ("tmp_output", "rt") as fin:
             self._check_expected_values (fin, 'd')    
         os.remove("tmp_output")
     
@@ -116,7 +116,7 @@ class TestFileMerger (unittest.TestCase):
         
         output_path = hm.finalize ("tmp_output", threshold=16)
         self.assertTrue (os.path.isfile(output_path), "output file does not exist")
-        with open (output_path) as fin:
+        with gzip.open (output_path, "rt") as fin:
             self._check_expected_values (fin, "t")
         os.remove (output_path)
         
