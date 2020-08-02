@@ -1,8 +1,11 @@
 
 import os
+import logging
 
 from .core import merge_and_collapse_iterable
 from .utils import flatten_list
+
+logger = logging.getLogger(__name__)
 
 class HierarchicalMerger:
 
@@ -18,9 +21,11 @@ class HierarchicalMerger:
         self._tree = [[]]
     
     def add (self, files):
+        logger.debug ("add {}".format(files))
         self._tree[0].extend (files)
         i=0
         while i<len(self._tree) and len(self._tree[i]) >= self.batch:
+            logger.debug("next iteration of hierarchical merging: level {}, number of files: {}".format(i, len(self._tree[i])))
             output_path = merge_and_collapse_iterable (self._tree[i], None, self.batch, self.delimiter,
                                                        self.tmpdir, self.delete_input or i>0)
             self._tree[i] = []
@@ -28,6 +33,7 @@ class HierarchicalMerger:
             if i != len(self._tree):
                 self._tree[i].append (output_path)
             else:
+                logger.debug("new level added")
                 self._tree.append ([output_path])
 
     def finalize (self, output_filename=None, threshold=0):
