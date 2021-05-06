@@ -69,7 +69,7 @@ def merge_and_collapse_pattern(filename_pattern, output_filename=None, batch=102
     return merge_and_collapse_iterable(files, output_filename, batch, delimiter, tmpdir, delete_input, threshold)
 
 
-def collapse_lines(lines, delimiter="\t", threshold=0):
+def collapse_lines(lines, delimiter="\t", threshold=0, check_if_input_is_sorted=True):
 
     try:
         firstline, firstfreq = next(lines).strip().split(delimiter)
@@ -79,6 +79,9 @@ def collapse_lines(lines, delimiter="\t", threshold=0):
 
             el, freq = line.strip().split(delimiter)
             freq = float(freq)
+
+            if check_if_input_is_sorted:
+                assert el >= firstline, "Collapse input is not sorted at line {}: {} {}".format(lineno, firstline, el)
 
             if el == firstline:
                 firstfreq += freq
