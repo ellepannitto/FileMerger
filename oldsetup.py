@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='FileMerger',
+    name='filemerger',
     description='set of utilities to merge sorted files and aggregate items in them',
     author='Ludovica Pannitto',
     author_email='ellepannitto@gmail.com',

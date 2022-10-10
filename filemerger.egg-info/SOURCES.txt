@@ -1,0 +1,12 @@
+LICENSE
+README.txt
+setup.cfg
+setup.py
+filemerger/HierarchicalMerger.py
+filemerger/__init__.py
+filemerger/core.py
+filemerger/utils.py
+filemerger.egg-info/PKG-INFO
+filemerger.egg-info/SOURCES.txt
+filemerger.egg-info/dependency_links.txt
+filemerger.egg-info/top_level.txt
