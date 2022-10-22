@@ -16,4 +16,7 @@
     "url": "https://github.com/ellepannitto/FileMerger/issues"
   },
   "homepage": "https://github.com/ellepannitto/FileMerger#readme"
+  "publishConfig": {
+   "@ellepannitto:registry": "https://npm.pkg.github.com"
+  }
 }
